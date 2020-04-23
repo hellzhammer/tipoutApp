@@ -4,6 +4,9 @@ class TipModel{
   double tipoutAmount;
   String workplace;
   DateTime shiftDate;
+  String startTime;
+  String endTime;
   double tipPercentage;
   String ownerID;
+  bool barTips;
 }

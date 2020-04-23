@@ -72,8 +72,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final username = TextEditingController();
   final password = TextEditingController();
-
+  final time = TextEditingController();
+  final time2 = TextEditingController();
+  final employer = TextEditingController();
   String usersName = '';
+  bool barTips = false;
+
+  bool readyToSave = false;
 
   List<TipModel> tips = [];
 
@@ -143,9 +148,25 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(icon: Icon(Icons.list), onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => TipsListViewMain()),); }),
-          IconButton(icon: Icon(Icons.settings), onPressed: () {})
-          ],
+          IconButton(
+              icon: Icon(Icons.list),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TipsListViewMain()),
+                );
+              }),
+          IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginViewMain()),
+                );
+              })
+        ],
         title: Text(
           'Tipout',
           style: TextStyle(color: Colors.white),
@@ -157,6 +178,23 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Text(
               'Ready To Tipout ' + usersName + '?',
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Dining Room"),
+                Switch(
+                    value: this.barTips,
+                    onChanged: (b) {
+                      setState(() {
+                        this.barTips = b;
+                      });
+                    }),
+                Text("Alcohol/Bar"),
+              ],
             ),
             SizedBox(
               height: 10,
@@ -215,6 +253,94 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(
               height: 10,
             ),
+            Container(
+              child: Card(
+                child: TextField(
+                  controller: this.time,
+                  onTap: () async {
+                    TimeOfDay t = await showTimePicker(
+                        context: context, initialTime: TimeOfDay.now());
+                    this.time.text = t.hour.toString() + ":" + t.minute.toString();
+                  },
+                  decoration: InputDecoration(
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.black26, width: 1.0),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white, width: 1.0),
+                      ),
+                      border: InputBorder.none,
+                      hintText: 'Start Time',
+                      hintStyle: TextStyle(color: Colors.white),
+                      labelText: 'Start Time',
+                      labelStyle: TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              width: MediaQuery.of(context).size.width / 1.5,
+              height: 60,
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Container(
+              child: Card(
+                child: TextField(
+                  controller: this.time2,
+                  onTap: () async {
+                    TimeOfDay t = await showTimePicker(
+                        context: context, initialTime: TimeOfDay.now());
+                    this.time2.text = t.hour.toString() + ":" + t.minute.toString();
+                  },
+                  decoration: InputDecoration(
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.black26, width: 1.0),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white, width: 1.0),
+                      ),
+                      border: InputBorder.none,
+                      hintText: 'End Time',
+                      hintStyle: TextStyle(color: Colors.white),
+                      labelText: 'End Time',
+                      labelStyle: TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              width: MediaQuery.of(context).size.width / 1.5,
+              height: 60,
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Container(
+              child: Card(
+                child: TextField(
+                  controller: this.employer,
+                  decoration: InputDecoration(
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.black26, width: 1.0),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white, width: 1.0),
+                      ),
+                      border: InputBorder.none,
+                      hintText: 'Employer',
+                      hintStyle: TextStyle(color: Colors.white),
+                      labelText: 'Employer',
+                      labelStyle: TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              width: MediaQuery.of(context).size.width / 1.5,
+              height: 60,
+            ),
+            SizedBox(
+              height: 10,
+            ),
             RaisedButton(
                 onPressed: () {
                   var output = this.foodCalc();
@@ -223,30 +349,52 @@ class _MyHomePageState extends State<MyHomePage> {
                   t.ownerID = usersName;
                   t.tipAmount = double.parse(this.username.text);
                   t.tipoutAmount = output;
+                  t.workplace = this.employer.text;
                   t.tipPercentage = double.parse(this.password.text);
                   t.shiftDate = DateTime.now();
+                  t.startTime = this.time.text;
+                  t.endTime = this.time2.text;
+                  t.barTips = this.barTips;
                   setState(() {
                     tips.add(t);
+                    this.username.text = "";
+                    this.password.text = "";
+                    this.time.text = "";
+                    this.time2.text = "";
+                    if (!this.readyToSave && this.tips.length > 0) {
+                      readyToSave = true;
+                    }
                   });
-
-                  this.username.text = "";
-                  this.password.text = "";
-
                   this._showDialog("Amount To Tip Out: " + output.toString(),
                       "Result", context);
                 },
                 child: Text("Calculate")),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height/12,
+                  child: Card(
+                    child: Row(
+                      children: [
+                        Text("Unsaved Data", style: TextStyle(fontSize: 30),),
+                        SizedBox(width: MediaQuery.of(context).size.width/9),
+                        Text(tips.length.toString(), style: TextStyle(fontSize: 30),)
+                      ],
+                    )
+                  )
+                ),
             SizedBox(
-              height: MediaQuery.of(context).size.height / 2,
-              child: ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: tips.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      title: Text('Tip Out Amount: ' + tips[index].tipoutAmount.toString()),
-                    );
-                  }),
-            ),
+                height: MediaQuery.of(context).size.height / 3,
+                child: Card(
+                  child: ListView.builder(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: tips.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return ListTile(
+                          title: Text('Tip Out Amount: ' +
+                              tips[index].tipoutAmount.toString()),
+                        );
+                      }),
+                )),
           ],
         ),
       ),
@@ -260,8 +408,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 "tipoutAmount": tips[i].tipoutAmount,
                 "workplace": tips[i].workplace,
                 "shiftDate": tips[i].shiftDate.toIso8601String(),
+                "startTime": tips[i].startTime,
+                "endTime": tips[i].endTime,
                 "tipPercentage": tips[i].tipPercentage,
-                "ownerID": tips[i].ownerID
+                "ownerID": tips[i].ownerID,
+                "barTips": tips[i].barTips
               };
               try {
                 var response1 =
@@ -276,13 +427,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 this._showDialog("There has been an issue!", "Error", context);
                 return;
               }
-
-              setState(() {
-                tips = new List<TipModel>();
-              });
-
-              this.loadAppState();
             }
+
+            setState(() {
+              tips = new List<TipModel>();
+            });
+
+            this.loadAppState();
           },
           child: Icon(Icons.save)),
     );
